@@ -43,12 +43,25 @@ jobs:
           npx cap add android
           npx cap sync
 
-      # CORRECCIÓN: Actualizamos la versión de Java a la 21 requerida por el compilador
       - name: Configurar Java JDK 21 (para Gradle)
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '21'
+
+      # CORRECCIÓN: Forzamos la misma versión de Kotlin stdlib para evitar las clases duplicadas
+      - name: Resolver conflicto de clases duplicadas de Kotlin
+        run: |
+          BUILD_GRADLE="${{ env.WEB_DIR }}/android/build.gradle"
+          echo "subprojects { subproject ->" >> $BUILD_GRADLE
+          echo "    configurations.configureEach { configuration ->" >> $BUILD_GRADLE
+          echo "        resolutionStrategy.eachDependency { details ->" >> $BUILD_GRADLE
+          echo "            if (details.requested.group == 'org.jetbrains.kotlin') {" >> $BUILD_GRADLE
+          echo "                details.useVersion '1.9.22'" >> $BUILD_GRADLE
+          echo "            }" >> $BUILD_GRADLE
+          echo "        }" >> $BUILD_GRADLE
+          echo "    }" >> $BUILD_GRADLE
+          echo "}" >> $BUILD_GRADLE
 
       # Compilamos el APK contenedor final
       - name: Compilar APK Final
