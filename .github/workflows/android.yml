@@ -21,20 +21,17 @@ jobs:
         with:
           target: wasm32-unknown-unknown
 
-      # SOLUCIÓN: Instalación nativa mediante Cargo para evitar errores de red o paquetes inexistentes
       - name: Instalar Trunk (compilador web de Rust)
         run: cargo install --locked trunk
 
-      # Compilamos la versión WebAssembly
+      # CORRECCIÓN: Compilamos directamente en la raíz del repositorio
       - name: Compilar versión WebAssembly
         run: |
-          cd apps/gridcraft
           trunk build --release
 
-      # Inicializamos el contenedor móvil nativo
+      # Inicializamos el contenedor móvil nativo en la raíz
       - name: Crear contenedor Android con Capacitor
         run: |
-          cd apps/gridcraft
           npm install @capacitor/core @capacitor/cli @capacitor/android
           npx cap init GridCraft com.jjmer95.gridcraft --web-dir=dist
           npx cap add android
@@ -46,14 +43,15 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      # Compilamos el APK contenedor final
+      # Compilamos el APK contenedor final desde la carpeta generada por Capacitor
       - name: Compilar APK Final
         run: |
-          cd apps/gridcraft/android
+          cd android
           ./gradlew assembleRelease
 
       - name: Subir APK final como artefacto
         uses: actions/upload-artifact@v4
         with:
           name: GridCraft-Web-APK
-          path: apps/gridcraft/android/app/build/outputs/apk/release/*.apk
+          path: android/app/build/outputs/apk/release/*.apk
+
