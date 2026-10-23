@@ -21,11 +21,11 @@ jobs:
         with:
           target: wasm32-unknown-unknown
 
-      # NUEVA FORMA DE INSTALAR TRUNK: Rápida y sin errores de tar
+      # NUEVA INSTALACIÓN: Descarga limpia y directa del binario de Trunk sin Cargo
       - name: Instalar Trunk (compilador web de Rust)
         run: |
-          cargo install cargo-binstall
-          cargo binstall --deploy-downloads --confirm trunk -y
+          curl -L https://github.com | tar -xzf -
+          sudo mv trunk /usr/local/bin/
 
       # Compilamos la versión WebAssembly
       - name: Compilar versión WebAssembly
