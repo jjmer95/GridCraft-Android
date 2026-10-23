@@ -1,46 +1,58 @@
-name: Build Android APK
+name: Build Android Hybrid APK
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-apk:
+  build-android:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout del código
         uses: actions/checkout@v4
 
-      - name: Configurar Java JDK
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-size: 20
+
+      - name: Configurar herramientas de Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          target: wasm32-unknown-unknown
+
+      - name: Instalar Trunk (compilador web de Rust)
+        run: wget -qO- https://github.com | tar -xzf- -C /usr/local/bin
+
+      # Compilamos el subproyecto web de GridCraft
+      - name: Compilar versión WebAssembly
+        run: |
+          cd apps/gridcraft
+          trunk build --release
+
+      # Inicializamos el contenedor móvil nativo
+      - name: Crear contenedor Android con Capacitor
+        run: |
+          cd apps/gridcraft
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init GridCraft com.jjmer95.gridcraft --web-dir=dist
+          npx cap add android
+          npx cap sync
+
+      - name: Configurar Java JDK 17 (para Gradle)
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Configurar herramientas de Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          target: aarch64-linux-android
-
-      - name: Instalar cargo-apk
-        run: cargo install cargo-apk
-
-      # NUEVO PASO: Instalar explícitamente la plataforma SDK 30 requerida
-      - name: Instalar Android SDK Platform 30
+      # Compilamos el APK contenedor final
+      - name: Compilar APK Final
         run: |
-          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-30"
-
-      - name: Configurar variables del SDK y NDK de Android
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "NDK_HOME=$ANDROID_HOME/ndk-bundle" >> $GITHUB_ENV
-
-      - name: Compilar APK en modo Release
-        run: |
-          cargo apk build --release -p gridcraft
+          cd apps/gridcraft/android
+          ./gradlew assembleRelease
 
       - name: Subir APK final como artefacto
         uses: actions/upload-artifact@v4
         with:
-          name: GridCraft-Android-APK
-          path: target/aarch64-linux-android/release/apk/*.apk
+          name: GridCraft-Web-APK
+          path: apps/gridcraft/android/app/build/outputs/apk/release/*.apk
