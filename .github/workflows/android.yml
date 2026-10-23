@@ -1,4 +1,3 @@
-
 name: Build Android APK
 
 on:
@@ -31,13 +30,14 @@ jobs:
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
           echo "NDK_HOME=$ANDROID_HOME/ndk-bundle" >> $GITHUB_ENV
 
-      # Compilamos especificando el paquete gráfico dentro del espacio de trabajo
+      # Compilamos apuntando al paquete específico en lugar de usar --workspace
       - name: Compilar APK en modo Release
         run: |
-          cargo apk build --release --workspace
+          cargo apk build --release -p gridcraft
 
       - name: Subir APK final como artefacto
         uses: actions/upload-artifact@v4
         with:
           name: GridCraft-Android-APK
           path: target/aarch64-linux-android/release/apk/*.apk
+
