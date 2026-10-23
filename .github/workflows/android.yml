@@ -1,7 +1,8 @@
+
 name: Build Android APK
 
 on:
-  workflow_dispatch: # Esto te permite activar la compilación manualmente con un botón
+  workflow_dispatch:
 
 jobs:
   build-apk:
@@ -22,16 +23,21 @@ jobs:
         with:
           target: aarch64-linux-android
 
-      - name: Instalar herramientas cargo-apk
-        run: |
-          cargo install cargo-apk
+      - name: Instalar cargo-apk
+        run: cargo install cargo-apk
 
+      - name: Configurar variables del SDK y NDK de Android
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "NDK_HOME=$ANDROID_HOME/ndk-bundle" >> $GITHUB_ENV
+
+      # Compilamos especificando el paquete gráfico dentro del espacio de trabajo
       - name: Compilar APK en modo Release
         run: |
-          cargo apk build --release
+          cargo apk build --release --workspace
 
       - name: Subir APK final como artefacto
         uses: actions/upload-artifact@v4
         with:
           name: GridCraft-Android-APK
-          path: target/debug/apk/*.apk
+          path: target/aarch64-linux-android/release/apk/*.apk
