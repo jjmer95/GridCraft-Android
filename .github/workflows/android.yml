@@ -24,14 +24,20 @@ jobs:
       - name: Instalar Trunk (compilador web de Rust)
         run: cargo install --locked trunk
 
-      # CORRECCIÓN: Compilamos directamente en la raíz del repositorio
+      # CORRECCIÓN INTELIGENTE: Busca dónde está el index.html y compila en ese directorio exacto
       - name: Compilar versión WebAssembly
         run: |
+          TARGET_DIR=$(dirname $(find . -name "index.html" -not -path "*/.**" | head -n 1))
+          echo "Carpeta web encontrada en: $TARGET_DIR"
+          cd "$TARGET_DIR"
           trunk build --release
+          # Guardamos la ruta en una variable global para los siguientes pasos
+          echo "WEB_DIR=$GITHUB_WORKSPACE/$TARGET_DIR" >> $GITHUB_ENV
 
-      # Inicializamos el contenedor móvil nativo en la raíz
+      # Inicializamos el contenedor móvil nativo en la carpeta web encontrada
       - name: Crear contenedor Android con Capacitor
         run: |
+          cd ${{ env.WEB_DIR }}
           npm install @capacitor/core @capacitor/cli @capacitor/android
           npx cap init GridCraft com.jjmer95.gridcraft --web-dir=dist
           npx cap add android
@@ -43,15 +49,16 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      # Compilamos el APK contenedor final desde la carpeta generada por Capacitor
+      # Compilamos el APK contenedor final
       - name: Compilar APK Final
         run: |
-          cd android
+          cd ${{ env.WEB_DIR }}/android
           ./gradlew assembleRelease
 
       - name: Subir APK final como artefacto
         uses: actions/upload-artifact@v4
         with:
           name: GridCraft-Web-APK
-          path: android/app/build/outputs/apk/release/*.apk
-
+          path: |
+            **/build/outputs/apk/release/*.apk
+            **/*.apk
