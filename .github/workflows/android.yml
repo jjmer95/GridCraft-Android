@@ -31,13 +31,15 @@ jobs:
           TARGET_DIR=$(dirname $(find . -name "index.html" -not -path "*/.**" | head -n 1))
           echo "Carpeta web encontrada en: $TARGET_DIR"
           cd "$TARGET_DIR"
-          trunk build --release
+          # Forzamos la creación del directorio de salida exacto
+          trunk build --release --dist dist
           echo "WEB_DIR=$GITHUB_WORKSPACE/$TARGET_DIR" >> $GITHUB_ENV
 
-      # CORRECCIÓN: Apuntamos de forma absoluta al directorio dist recién creado por Trunk
+      # CORRECCIÓN DEFINITIVA: Aseguramos la existencia física y la ruta exacta absoluta
       - name: Crear contenedor Android con Capacitor
         run: |
           cd ${{ env.WEB_DIR }}
+          mkdir -p dist
           npm install @capacitor/core @capacitor/cli @capacitor/android
           npx cap init GridCraft com.jjmer95.gridcraft --web-dir="${{ env.WEB_DIR }}/dist"
           npx cap add android
