@@ -31,11 +31,9 @@ jobs:
           TARGET_DIR=$(dirname $(find . -name "index.html" -not -path "*/.**" | head -n 1))
           echo "Carpeta web encontrada en: $TARGET_DIR"
           cd "$TARGET_DIR"
-          # Forzamos la creación del directorio de salida exacto
           trunk build --release --dist dist
           echo "WEB_DIR=$GITHUB_WORKSPACE/$TARGET_DIR" >> $GITHUB_ENV
 
-      # CORRECCIÓN DEFINITIVA: Aseguramos la existencia física y la ruta exacta absoluta
       - name: Crear contenedor Android con Capacitor
         run: |
           cd ${{ env.WEB_DIR }}
@@ -45,11 +43,12 @@ jobs:
           npx cap add android
           npx cap sync
 
-      - name: Configurar Java JDK 17 (para Gradle)
+      # CORRECCIÓN: Actualizamos la versión de Java a la 21 requerida por el compilador
+      - name: Configurar Java JDK 21 (para Gradle)
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
 
       # Compilamos el APK contenedor final
       - name: Compilar APK Final
