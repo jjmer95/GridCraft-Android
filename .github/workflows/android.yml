@@ -21,9 +21,9 @@ jobs:
         with:
           target: wasm32-unknown-unknown
 
-      # SOLUCIÓN DEFINITIVA: Instalación directa desde NPM sin archivos corruptos
+      # SOLUCIÓN: Instalación nativa mediante Cargo para evitar errores de red o paquetes inexistentes
       - name: Instalar Trunk (compilador web de Rust)
-        run: npm install -g @trunk-rs/trunk
+        run: cargo install --locked trunk
 
       # Compilamos la versión WebAssembly
       - name: Compilar versión WebAssembly
