@@ -24,7 +24,6 @@ jobs:
       - name: Instalar Trunk (compilador web de Rust)
         run: cargo install --locked trunk
 
-      # CORRECCIÓN: Forzamos a Rust a ignorar las advertencias de código muerto durante la compilación web
       - name: Compilar versión WebAssembly
         env:
           RUSTFLAGS: "-A dead_code"
@@ -35,12 +34,12 @@ jobs:
           trunk build --release
           echo "WEB_DIR=$GITHUB_WORKSPACE/$TARGET_DIR" >> $GITHUB_ENV
 
-      # Inicializamos el contenedor móvil nativo en la carpeta web encontrada
+      # CORRECCIÓN: Apuntamos de forma absoluta al directorio dist recién creado por Trunk
       - name: Crear contenedor Android con Capacitor
         run: |
           cd ${{ env.WEB_DIR }}
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap init GridCraft com.jjmer95.gridcraft --web-dir=dist
+          npx cap init GridCraft com.jjmer95.gridcraft --web-dir="${{ env.WEB_DIR }}/dist"
           npx cap add android
           npx cap sync
 
