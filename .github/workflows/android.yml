@@ -49,7 +49,6 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      # CORRECCIÓN: Forzamos la misma versión de Kotlin stdlib para evitar las clases duplicadas
       - name: Resolver conflicto de clases duplicadas de Kotlin
         run: |
           BUILD_GRADLE="${{ env.WEB_DIR }}/android/build.gradle"
@@ -63,16 +62,23 @@ jobs:
           echo "    }" >> $BUILD_GRADLE
           echo "}" >> $BUILD_GRADLE
 
-      # Compilamos el APK contenedor final
       - name: Compilar APK Final
         run: |
           cd ${{ env.WEB_DIR }}/android
           ./gradlew assembleRelease
 
-      - name: Subir APK final como artefacto
+      # PASO NUEVO: Firma el APK automáticamente usando una clave debug/release temporal para que Android lo acepte
+      - name: Firmar APK Digitalmente
+        uses: r0adkll/sign-android-release@v1
+        id: sign_app
+        with:
+          releaseDirectory: ${{ env.WEB_DIR }}/android/app/build/outputs/apk/release
+          signingKeyBase64: "" # Al dejarlo vacío, la herramienta genera una firma debug válida para instalación local
+        env:
+          BUILD_TOOLS_VERSION: "34.0.0"
+
+      - name: Subir APK FIRMADO como artefacto
         uses: actions/upload-artifact@v4
         with:
-          name: GridCraft-Web-APK
-          path: |
-            **/build/outputs/apk/release/*.apk
-            **/*.apk
+          name: GridCraft-Android-Firmado
+          path: ${{ steps.sign_app.outputs.signedReleaseFile }}
