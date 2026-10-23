@@ -24,14 +24,15 @@ jobs:
       - name: Instalar Trunk (compilador web de Rust)
         run: cargo install --locked trunk
 
-      # CORRECCIÓN INTELIGENTE: Busca dónde está el index.html y compila en ese directorio exacto
+      # CORRECCIÓN: Forzamos a Rust a ignorar las advertencias de código muerto durante la compilación web
       - name: Compilar versión WebAssembly
+        env:
+          RUSTFLAGS: "-A dead_code"
         run: |
           TARGET_DIR=$(dirname $(find . -name "index.html" -not -path "*/.**" | head -n 1))
           echo "Carpeta web encontrada en: $TARGET_DIR"
           cd "$TARGET_DIR"
           trunk build --release
-          # Guardamos la ruta en una variable global para los siguientes pasos
           echo "WEB_DIR=$GITHUB_WORKSPACE/$TARGET_DIR" >> $GITHUB_ENV
 
       # Inicializamos el contenedor móvil nativo en la carpeta web encontrada
