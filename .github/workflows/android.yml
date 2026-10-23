@@ -14,17 +14,20 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-size: 20
+          node-version: 20
 
       - name: Configurar herramientas de Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           target: wasm32-unknown-unknown
 
+      # NUEVA FORMA DE INSTALAR TRUNK: Rápida y sin errores de tar
       - name: Instalar Trunk (compilador web de Rust)
-        run: wget -qO- https://github.com | tar -xzf- -C /usr/local/bin
+        run: |
+          cargo install cargo-binstall
+          cargo binstall --deploy-downloads --confirm trunk -y
 
-      # Compilamos el subproyecto web de GridCraft
+      # Compilamos la versión WebAssembly
       - name: Compilar versión WebAssembly
         run: |
           cd apps/gridcraft
