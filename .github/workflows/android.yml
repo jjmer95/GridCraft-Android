@@ -25,12 +25,16 @@ jobs:
       - name: Instalar cargo-apk
         run: cargo install cargo-apk
 
+      # NUEVO PASO: Instalar explícitamente la plataforma SDK 30 requerida
+      - name: Instalar Android SDK Platform 30
+        run: |
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-30"
+
       - name: Configurar variables del SDK y NDK de Android
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
           echo "NDK_HOME=$ANDROID_HOME/ndk-bundle" >> $GITHUB_ENV
 
-      # Compilamos apuntando al paquete específico en lugar de usar --workspace
       - name: Compilar APK en modo Release
         run: |
           cargo apk build --release -p gridcraft
@@ -40,4 +44,3 @@ jobs:
         with:
           name: GridCraft-Android-APK
           path: target/aarch64-linux-android/release/apk/*.apk
-
