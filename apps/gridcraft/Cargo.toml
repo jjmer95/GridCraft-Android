@@ -7,6 +7,14 @@ publish = false
 default-run = "gridcraft"
 description = "GridCraft desktop app"
 
+[lib]
+name = "gridcraft_app"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "gridcraft"
+path = "src/main.rs"
+
 [lints]
 workspace = true
 
