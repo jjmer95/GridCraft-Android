@@ -20,12 +20,15 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Aceptar Licencias de Android Automáticamente
-      uses: android-actions/setup-android@v3
-
-    - name: Forzar aprobación de términos restantes
+    - name: Aceptar Licencias de Android (Modo Nativo)
       run: |
-        echo "y" | sudo ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        # 1. Forzar la aprobación inyectando "yes" en todos los gestores de licencias posibles
+        yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        yes | ${ANDROID_HOME}/tools/bin/sdkmanager --licenses || true
+        
+        # 2. Asegurar que las variables queden bien registradas para el compilador de Rust
+        echo "ANDROID_HOME=${ANDROID_HOME}" >> $GITHUB_ENV
+        echo "ANDROID_NDK_ROOT=${ANDROID_HOME}/ndk-bundle" >> $GITHUB_ENV
 
     - name: Instalar Rust y Target Android
       uses: dtolnay/rust-toolchain@stable
