@@ -133,6 +133,7 @@ fn read_clipboard<T>(
     read(clipboard.as_mut()?).ok()
 }
 
+#[cfg(not(target_os = "android"))]
 fn services() -> Services {
     let clipboard: Rc<RefCell<Option<arboard::Clipboard>>> = Rc::default();
     let (html_clipboard, text_clipboard) = (clipboard.clone(), clipboard.clone());
@@ -144,9 +145,9 @@ fn services() -> Services {
             }
             clipboard.as_mut().ok_or("clipboard unavailable")?.set_html(html, Some(text)).map_err(|e| e.to_string())
         })),
-        paste_html: Some(Box::new(move | | read_clipboard(&html_clipboard, |clipboard| clipboard.get().html()))),
-        paste_text: Some(Box::new(move | | read_clipboard(&text_clipboard, |clipboard| clipboard.get_text()))),
-        pick_open: Some(Box::new(| | {
+        paste_html: Some(Box::new(move || read_clipboard(&html_clipboard, |clipboard| clipboard.get().html()))),
+        paste_text: Some(Box::new(move || read_clipboard(&text_clipboard, |clipboard| clipboard.get_text()))),
+        pick_open: Some(Box::new(|| {
             rfd::FileDialog::new()
                 .add_filter("Spreadsheets", &["xlsx", "xlsm", "xls", "xlsb", "ods", "csv", "tsv", "txt", "json"])
                 .add_filter("Excel Workbook", &["xlsx", "xlsm"])
@@ -157,7 +158,7 @@ fn services() -> Services {
                 .pick_file()
                 .and_then(|p| p.to_str().map(str::to_string))
         })),
-        pick_picture: Some(Box::new(| | {
+        pick_picture: Some(Box::new(|| {
             rfd::FileDialog::new()
                 .add_filter("Pictures (PNG, JPEG)", &["png", "jpg", "jpeg"])
                 .pick_file()
@@ -166,7 +167,6 @@ fn services() -> Services {
         pick_save: Some(Box::new(|suggested: &str| {
             let path = std::path::Path::new(suggested);
             let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("Book1").to_string();
-            // Implementación simplificada para evitar el truncado del código
             rfd::FileDialog::new()
                 .set_file_name(&stem)
                 .save_file()
@@ -174,6 +174,7 @@ fn services() -> Services {
         })),
     }
 }
+    
 
 #[cfg(not(target_os = "android"))]
 fn main() {
