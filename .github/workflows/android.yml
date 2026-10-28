@@ -20,8 +20,15 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Configurar Android SDK
+    - name: Configurar Android SDK y Aceptar Licencias de Forma Automática
       uses: android-actions/setup-android@v3
+      with:
+        log-accepted-licenses: true
+
+    - name: Forzar Aceptación de Licencias Restantes
+      run: |
+        yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        yes | ${ANDROID_HOME}/tools/bin/sdkmanager --licenses || true
 
     - name: Instalar Rust y Target Android
       uses: dtolnay/rust-toolchain@stable
