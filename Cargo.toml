@@ -45,7 +45,8 @@ egui = "0.36"
 egui_extras = { version = "0.36", default-features = false }
 eframe = { version = "0.36", default-features = false }
 egui_kittest = "0.36"
-rfd = "0.17"
+# En el Cargo.toml raíz principal, busca rfd y cámbialo por esto:
+rfd = { version = "0.17", default-features = false }
 arboard = { version = "3.6", default-features = false }
 # The desktop's preferred language, for the first-run interface language (native only).
 sys-locale = "0.3"
