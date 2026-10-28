@@ -20,15 +20,27 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Configurar Android SDK y Aceptar Licencias de Forma Automática
-      uses: android-actions/setup-android@v3
-      with:
-        log-accepted-licenses: true
-
-    - name: Forzar Aceptación de Licencias Restantes
+    - name: Instalar y licenciar Android SDK manualmente
       run: |
-        yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses || true
-        yes | ${ANDROID_HOME}/tools/bin/sdkmanager --licenses || true
+        # 1. Crear directorios para el SDK
+        mkdir -p mkdir -p $HOME/android-sdk/cmdline-tools
+        cd $HOME/android-sdk/cmdline-tools
+        
+        # 2. Descargar las herramientas oficiales de línea de comandos de Android
+        wget -q https://google.com
+        unzip -q commandlinetools-linux-11076708_latest.zip
+        mv cmdline-tools latest
+        
+        # 3. Configurar variables de entorno indispensables para Cargo-apk
+        echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+        echo "ANDROID_NDK_ROOT=$HOME/android-sdk/ndk-bundle" >> $GITHUB_ENV
+        export ANDROID_HOME=$HOME/android-sdk
+        
+        # 4. FORZAR la aceptación de todas las licencias antes de instalar nada
+        yes | ./latest/bin/sdkmanager --licenses --sdk_root=$ANDROID_HOME
+        
+        # 5. Instalar las plataformas necesarias para compilar aplicaciones móviles
+        ./latest/bin/sdkmanager "platforms;android-33" "build-tools;33.0.2" "ndk-bundle" --sdk_root=$ANDROID_HOME
 
     - name: Instalar Rust y Target Android
       uses: dtolnay/rust-toolchain@stable
