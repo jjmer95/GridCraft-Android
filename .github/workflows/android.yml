@@ -20,11 +20,14 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Aceptar Licencias de Android (Modo Nativo)
+    - name: Aceptar Licencias e Instalar Plataformas Requeridas
       run: |
         # 1. Firmar los términos de uso de Google de forma automática
         yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses || true
         yes | ${ANDROID_HOME}/tools/bin/sdkmanager --licenses || true
+        
+        # 2. Descargar e instalar específicamente la Plataforma 30 solicitada por cargo-apk
+        ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "platforms;android-30"
 
     - name: Instalar Rust y Target Android
       uses: dtolnay/rust-toolchain@stable
@@ -37,7 +40,7 @@ jobs:
 
     - name: Compilar APK Específico
       run: |
-        # Localizamos de forma automática el NDK preinstalado en el servidor para evitar fallos de lectura
+        # Localizamos el NDK preinstalado en el servidor de forma dinámica
         export ANDROID_NDK_ROOT=$(ls -d /usr/local/lib/android/sdk/ndk/* | head -n 1)
         echo "Usando NDK en ruta: $ANDROID_NDK_ROOT"
         
@@ -49,3 +52,4 @@ jobs:
       with:
         name: gridcraft-android-apk
         path: target/release/apk/*.apk
+        
