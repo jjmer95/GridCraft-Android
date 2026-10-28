@@ -61,13 +61,11 @@ objc2-app-kit = { version = "=0.3.2", default-features = false, features = ["std
 name = "mac_menu_appkit"
 harness = false
 
-# Reemplaza las líneas finales de target en apps/gridcraft/Cargo.toml por esto:
-
 [target.'cfg(not(target_os = "android"))'.dependencies]
-rfd = { workspace = true, features = ["xdg-portal", "tokio"] }
+rfd = { workspace = true }
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.13"
 winit = { version = "0.30", features = ["android-game-activity"] }
 android-activity = { version = "0.6", features = ["game-activity"] }
-rfd = { workspace = true }
+
