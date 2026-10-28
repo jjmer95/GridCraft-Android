@@ -76,3 +76,7 @@ opt-level = 3
 lto = "thin"
 codegen-units = 16
 debug = 0
+# Añade esto al final del todo en tu Cargo.toml de la raíz principal:
+
+[patch.crates-io]
+rfd = { git = "https://github.com", branch = "master" }
