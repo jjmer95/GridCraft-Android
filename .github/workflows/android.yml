@@ -1,84 +1,43 @@
-name: Build Android Hybrid APK
+
+name: Build Android APK
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
 
 jobs:
-  build-android:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout del código
-        uses: actions/checkout@v4
+    - name: Descargar Repositorio
+      uses: actions/checkout@v4
 
-      - name: Configurar Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+    - name: Configurar Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
 
-      - name: Configurar herramientas de Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          target: wasm32-unknown-unknown
+    - name: Configurar Android SDK
+      uses: android-actions/setup-android@v3
 
-      - name: Instalar Trunk (compilador web de Rust)
-        run: cargo install --locked trunk
+    - name: Instalar Rust y Target Android
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: stable
+        targets: aarch64-linux-android
 
-      - name: Compilar versión WebAssembly
-        env:
-          RUSTFLAGS: "-A dead_code"
-        run: |
-          TARGET_DIR=$(dirname $(find . -name "index.html" -not -path "*/.**" | head -n 1))
-          echo "Carpeta web encontrada en: $TARGET_DIR"
-          cd "$TARGET_DIR"
-          trunk build --release --dist dist
-          echo "WEB_DIR=$GITHUB_WORKSPACE/$TARGET_DIR" >> $GITHUB_ENV
+    - name: Instalar cargo-apk
+      run: cargo install cargo-apk
 
-      - name: Crear contenedor Android con Capacitor
-        run: |
-          cd ${{ env.WEB_DIR }}
-          mkdir -p dist
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap init GridCraft com.jjmer95.gridcraft --web-dir="${{ env.WEB_DIR }}/dist"
-          npx cap add android
-          npx cap sync
+    - name: Compilar APK Específico
+      run: cargo apk build --release --package gridcraft
 
-      - name: Configurar Java JDK 21 (para Gradle)
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '21'
-
-      - name: Resolver conflicto de clases duplicadas de Kotlin
-        run: |
-          BUILD_GRADLE="${{ env.WEB_DIR }}/android/build.gradle"
-          echo "subprojects { subproject ->" >> $BUILD_GRADLE
-          echo "    configurations.configureEach { configuration ->" >> $BUILD_GRADLE
-          echo "        resolutionStrategy.eachDependency { details ->" >> $BUILD_GRADLE
-          echo "            if (details.requested.group == 'org.jetbrains.kotlin') {" >> $BUILD_GRADLE
-          echo "                details.useVersion '1.9.22'" >> $BUILD_GRADLE
-          echo "            }" >> $BUILD_GRADLE
-          echo "        }" >> $BUILD_GRADLE
-          echo "    }" >> $BUILD_GRADLE
-          echo "}" >> $BUILD_GRADLE
-
-      - name: Compilar APK Final
-        run: |
-          cd ${{ env.WEB_DIR }}/android
-          ./gradlew assembleRelease
-
-      # PASO NUEVO: Firma el APK automáticamente usando una clave debug/release temporal para que Android lo acepte
-      - name: Firmar APK Digitalmente
-        uses: r0adkll/sign-android-release@v1
-        id: sign_app
-        with:
-          releaseDirectory: ${{ env.WEB_DIR }}/android/app/build/outputs/apk/release
-          signingKeyBase64: "" # Al dejarlo vacío, la herramienta genera una firma debug válida para instalación local
-        env:
-          BUILD_TOOLS_VERSION: "34.0.0"
-
-      - name: Subir APK FIRMADO como artefacto
-        uses: actions/upload-artifact@v4
-        with:
-          name: GridCraft-Android-Firmado
-          path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+    - name: Guardar APK resultante
+      uses: actions/upload-artifact@v4
+      with:
+        name: gridcraft-android-apk
+        path: target/release/apk/*.apk
